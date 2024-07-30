@@ -11,8 +11,8 @@
 void static_spheres() {
     hittable_list world;
 
-    auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
-    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground_material));
+    auto checker = make_shared<checker_texture>(0.32, color(.2, .3, .1), color(.9, .9, .9));
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(checker)));
 
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
@@ -55,8 +55,9 @@ void static_spheres() {
 
     cam.aspect_ratio = 16.0 / 9.0;
     cam.image_width = 1200;
-    cam.samples_per_pixel = 500;
-    cam.max_depth = 50;
+    cam.samples_per_pixel = 10;
+    cam.max_depth = 5;
+    cam.background = color(0.70, 0.80, 1.00);
 
     cam.vfov = 20;
     cam.lookfrom = point3(13, 2, 3);
@@ -92,6 +93,7 @@ void quads() {
     cam.image_width = 400;
     cam.samples_per_pixel = 100;
     cam.max_depth = 50;
+    cam.background = color(0.70, 0.80, 1.00);
 
     cam.vfov = 80;
     cam.lookfrom = point3(0, 0, 9);
@@ -103,9 +105,38 @@ void quads() {
     cam.render(world);
 }
 
+void simple_light() {
+    hittable_list world;
+
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(color(0.4, 0.5, 0.4))));
+    world.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<lambertian>(color(0.9, 0.9, 1.0))));
+
+    auto difflight = make_shared<diffuse_light>(color(4, 4, 4));
+    world.add(make_shared<sphere>(point3(0, 8, 0), 1, difflight));
+    world.add(make_shared<quad>(point3(3, 1, -2), vec3(2, 0, 0), vec3(0, 2, 0), difflight));
+
+    camera cam;
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 400;
+    cam.samples_per_pixel = 200;
+    cam.max_depth = 20;
+    cam.background = color(0, 0, 0);
+
+    cam.vfov = 20;
+    cam.lookfrom = point3(26, 3, 6);
+    cam.lookat = point3(0, 2, 0);
+    cam.vup = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+
+    cam.render(world);
+}
+
 int main() {
-    switch (1) {
-    case 0:  static_spheres();  break;
-    case 1:  quads();           break;
+    switch (2) {
+        case 0:  static_spheres();  break;
+        case 1:  quads();           break;
+		case 2:  simple_light();    break;
     }
 }
