@@ -5,9 +5,25 @@
 class sphere : public hittable {
 public:
     sphere(const point3 &center, double radius, shared_ptr<material> mat)
-        : center(center), radius(std::fmax(0, radius)), mat(mat) {}
+        : center1(center), radius(std::fmax(0, radius)), mat(mat), is_moving(false)
+    {
+        auto rvec = vec3(radius, radius, radius);
+		bbox = aabb(center1 - rvec, center1 + rvec);
+    }
+
+    sphere(const point3 &center1, const point3 &center2, double radius, shared_ptr<material>mat)
+        : center1(center1), radius(std::fmax(0, radius)), mat(mat), is_moving(true)
+    {
+		auto rvec = vec3(radius, radius, radius);
+		aabb box1(center1 - rvec, center1 + rvec);
+		aabb box2(center2 - rvec, center2 + rvec);
+		bbox = aabb(box1, box2);
+
+        center_vec = center2 - center1;
+    }
 
     bool hit(const ray &r, interval ray_t, hit_record &rec) const override {
+		point3 center = is_moving ? sphere_center(r.time()) : center1;
         vec3 oc = center - r.origin();
         auto a = r.direction().length_squared();
         auto h = dot(r.direction(), oc);
@@ -36,8 +52,19 @@ public:
         return true;
     }
 
+	aabb bounding_box() const override {
+		return bbox;
+	}
+
 private:
-    point3 center;
+    point3 center1;
     double radius;
 	shared_ptr<material> mat;
+    bool is_moving;
+    vec3 center_vec;
+	aabb bbox;
+
+    point3 sphere_center(double time) const {
+		return center1 + time * center_vec;
+    }
 };
