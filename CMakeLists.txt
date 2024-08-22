@@ -1,5 +1,17 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.14)
 
 project(PathTracer)
 
-add_executable(PathTracer main.cpp "vec3.h" "color.h" "ray.h" "hittable.h" "sphere.h" "hittable_list.h" "util.h" "interval.h" "camera.h" "material.h" "aabb.h" "bvh.h" "quad.h" "texture.h"  "onb.h" "pdf.h")
+set(CMAKE_CXX_STANDARD 20)
+
+option (FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
+if (${FORCE_COLORED_OUTPUT})
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+       add_compile_options (-fdiagnostics-color=always)
+    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+       add_compile_options (-fcolor-diagnostics)
+    endif ()
+endif ()
+
+add_subdirectory(lib)
+add_subdirectory(src/PathTracer)
