@@ -33,6 +33,20 @@ public:
 	double defocus_angle = 0;
 	double focus_dist = 10;
 
+	int image_height;
+	double pixel_samples_scale;
+	int sqrt_spp;
+	double recip_sqrt_spp;
+	point3 center;
+	point3 pixel00_loc;
+	vec3 pixel_delta_u;
+	vec3 pixel_delta_v;
+	vec3 u, v, w;
+	vec3 defocus_disk_u;
+	vec3 defocus_disk_v;
+
+	unsigned char *imageData;
+
 	void render(const hittable &world, const hittable &lights) {
 		auto start = std::chrono::high_resolution_clock::now();
 
@@ -61,26 +75,15 @@ public:
 		std::clog << "Elapsed time: " << elapsed.count() << "s\n";
 	}
 
-private:
-	int image_height;
-	double pixel_samples_scale;
-	int sqrt_spp;
-	double recip_sqrt_spp;
-	point3 center;
-	point3 pixel00_loc;
-	vec3 pixel_delta_u;
-	vec3 pixel_delta_v;
-	vec3 u, v, w;
-	vec3 defocus_disk_u;
-	vec3 defocus_disk_v;
-
-	unsigned char *imageData;
-
 	void initialize() {
+		imageData = new unsigned char[image_width * image_height * 3];
+
+		calculateParameters();
+	}
+
+	void calculateParameters() {
 		image_height = static_cast<int>(image_width / aspect_ratio);
 		image_height = (image_height < 1) ? 1 : image_height;
-
-		imageData = new unsigned char[image_width * image_height * 3];
 
 		sqrt_spp = static_cast<int>(std::sqrt(samples_per_pixel));
 		pixel_samples_scale = 1.0 / (sqrt_spp * sqrt_spp);
@@ -111,6 +114,7 @@ private:
 		defocus_disk_v = defocus_radius * v;
 	}
 
+private:
 	ray get_ray(int i, int j, int s_i, int s_j) const {
 		auto offset = sample_square_stratified(s_i, s_j);
 		auto pixel_sample = pixel00_loc

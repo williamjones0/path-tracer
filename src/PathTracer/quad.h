@@ -7,6 +7,9 @@
 
 class quad : public hittable {
 public:
+    point3 Q;
+    vec3 u, v;
+
     quad(const point3 &Q, const vec3 &u, const vec3 &v, shared_ptr<material> mat)
         : Q(Q), u(u), v(v), mat(mat)
     {
@@ -85,8 +88,6 @@ public:
     }
 
 private:
-    point3 Q;
-    vec3 u, v;
     vec3 w;
     shared_ptr<material> mat;
     aabb bbox;

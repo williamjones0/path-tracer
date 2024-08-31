@@ -112,7 +112,7 @@ inline vec3 random_in_unit_disk() {
 	}
 }
 
-inline vec3 random_on_unit_sphere() {
+inline vec3 random_in_unit_sphere() {
 	while (true) {
 		auto p = vec3::random(-1, 1);
 		if (p.length_squared() >= 1) continue;
@@ -121,11 +121,11 @@ inline vec3 random_on_unit_sphere() {
 }
 
 inline vec3 random_unit_vector() {
-	return unit_vector(random_on_unit_sphere());
+	return unit_vector(random_in_unit_sphere());
 }
 
 inline vec3 random_on_hemisphere(const vec3 &normal) {
-	vec3 on_unit_sphere = random_on_unit_sphere();
+	vec3 on_unit_sphere = random_in_unit_sphere();
 	if (dot(on_unit_sphere, normal) > 0.0) // In the same hemisphere as the normal
 		return on_unit_sphere;
 	else

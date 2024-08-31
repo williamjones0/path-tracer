@@ -14,11 +14,11 @@ endif()
 add_custom_target(copy_data ALL COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/data ${CMAKE_CURRENT_BINARY_DIR}/data)   
 
 add_executable(PathTracer
-    main.cpp
-)
+    main.cpp comp_main.cpp
+ "opengl/Shader.h")
 
 add_dependencies(PathTracer copy_data)
 
 target_include_directories(PathTracer PRIVATE include)
 
-target_link_libraries(PathTracer PRIVATE glad glfw imgui glm cgltf stb_image spdlog TracyClient)
+target_link_libraries(PathTracer PRIVATE glad glfw imgui glm cgltf stb_image spdlog)
