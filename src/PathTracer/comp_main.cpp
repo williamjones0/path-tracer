@@ -40,6 +40,11 @@ struct gpu_quad {
     alignas(4)  unsigned int materialIndex;
 };
 
+struct light {
+    alignas(4) unsigned int quadIndex;
+    alignas(4) float area;
+};
+
 void GLAPIENTRY MessageCallback(
     GLenum source,
     GLenum type,
@@ -143,7 +148,7 @@ int main() {
 		glm::vec4(q2.Q.x(), q2.Q.y(), q2.Q.z(), 0.0),
 		glm::vec4(q2.u.x(), q2.u.y(), q2.u.z(), 0.0),
 		glm::vec4(q2.v.x(), q2.v.y(), q2.v.z(), 0.0),
-		1
+		3
 	};
 	gpu_quad gq3 = {
 		glm::vec4(q3.Q.x(), q3.Q.y(), q3.Q.z(), 0.0),
@@ -172,11 +177,26 @@ int main() {
 	glNamedBufferStorage(quadBuffer, sizeof(quads), quads, 0);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, quadBuffer);
 
+    // Light SSBO
+	glm::vec3 q2_v0 = glm::vec3(q2.Q.x(), q2.Q.y(), q2.Q.z());
+    glm::vec3 q2_v1 = q2_v0 + glm::vec3(q2.u.x(), q2.u.y(), q2.u.z());
+
+	float area = glm::length(glm::cross(q2_v0, q2_v1)) / 2.0f;
+	light l0 = { 2, area };
+
+	light lights[] = { l0 };
+
+	GLuint lightBuffer;
+	glCreateBuffers(1, &lightBuffer);
+
+	glNamedBufferStorage(lightBuffer, sizeof(lights), lights, 0);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, lightBuffer);
+
     // Material SSBO
     Material red = { glm::vec4(.65, .05, .05, 0), MATERIAL_LAMBERTIAN };
     Material white = { glm::vec4(.73, .73, .73, 0), MATERIAL_LAMBERTIAN };
     Material green = { glm::vec4(.12, .45, .15, 0), MATERIAL_LAMBERTIAN };
-    Material light = { glm::vec4(15.0f, 15.0f, 15.0f, 0), MATERIAL_LIGHT };
+    Material light = { glm::vec4(2.0f, 2.0f, 2.0f, 0), MATERIAL_LIGHT };
 
     Material materials[] = { red, white, green, light };
 
@@ -184,7 +204,7 @@ int main() {
     glCreateBuffers(1, &materialBuffer);
 
     glNamedBufferStorage(materialBuffer, sizeof(materials), materials, 0);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, materialBuffer);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, materialBuffer);
 
     // outputImage image2D
 	GLuint outputImage;
@@ -219,10 +239,9 @@ int main() {
 	glVertexArrayAttribFormat(quadVAO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2);
 	glVertexArrayAttribBinding(quadVAO, 1, 0);
 
-
-    // Camera uniforms
+    // Camera setup
     cam.aspect_ratio = 1.0;
-    cam.image_width = 400;
+    cam.image_width = SCREEN_WIDTH;
     cam.samples_per_pixel = 1;
     cam.max_depth = 5;
     cam.background = color(0, 0, 0);
@@ -235,6 +254,11 @@ int main() {
     cam.defocus_angle = 0;
 
     cam.initialize();
+
+    // Other uniforms
+    shader.use();
+	shader.setInt("IMAGE_WIDTH", SCREEN_WIDTH);
+	shader.setInt("IMAGE_HEIGHT", SCREEN_HEIGHT);
 
 	while (!glfwWindowShouldClose(window)) {
         float currentFrame = static_cast<float>(glfwGetTime());

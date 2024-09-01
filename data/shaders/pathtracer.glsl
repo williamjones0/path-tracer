@@ -19,6 +19,11 @@ struct quad {
 	uint materialIndex;
 };
 
+struct light {
+	uint quadIndex;
+	float area;
+};
+
 layout (binding = 0, rgba32f) uniform image2D outputImage;
 
 const float pi = 3.1415926535897932385;
@@ -40,25 +45,29 @@ layout (binding = 1, std430) readonly buffer Quads {
 	quad quads_[];
 };
 
-layout (binding = 2, std430) readonly buffer Materials {
+layout (binding = 2, std430) readonly buffer Lights {
+	light lights[];
+};
+
+layout (binding = 3, std430) readonly buffer Materials {
 	Material materials[];
 };
 
 const float vFov = 40.0;
 
-const int MAX_DEPTH = 5;
+const int MAX_DEPTH = 1;
 
-const int SAMPLES_PER_PIXEL = 10;
+const int SAMPLES_PER_PIXEL = 5;
 const int sqrt_spp = int(sqrt(SAMPLES_PER_PIXEL));
 const float pixel_samples_scale = 1.0 / (sqrt_spp * sqrt_spp);
 const float recip_sqrt_spp = 1.0 / sqrt_spp;
 
-const vec3 BACKGROUND_COLOR = vec3(0.5, 0.7, 1.0);
+const vec3 BACKGROUND_COLOR = vec3(0.0, 0.0, 0.0);
 const int NUM_TRIANGLES = 6;
 
-const int IMAGE_HEIGHT = 400;
-const int IMAGE_WIDTH = 400;
-const float ASPECT_RATIO = IMAGE_WIDTH / IMAGE_HEIGHT;
+uniform int IMAGE_HEIGHT;
+uniform int IMAGE_WIDTH;
+float ASPECT_RATIO = IMAGE_WIDTH / IMAGE_HEIGHT;
 
 struct Camera {
 	float defocus_angle;
@@ -259,9 +268,27 @@ vec3 sampleGlass(vec3 I, hit_record rec, inout float pdf) {
 	return t * reflect(i, rec.normal) + (1.0 - t) * refract(i, rec.normal, refraction_ratio);
 }
 
+vec3 randomOnAQuad(uint quadIndex) {
+	float u = random_float();
+	float v = random_float();
+	quad q = quads_[quadIndex];
+	vec3 Q = q.Q.xyz;
+	vec3 u_ = q.u.xyz;
+	vec3 v_ = q.v.xyz;
+	return Q + u * u_ + v * v_;
+};
+
 vec3 sampleLight(vec3 p, inout float pdf, inout float lightCosine) {
-	// TODO: Implement light sampling
-	return vec3(0.5);
+	int lightIndex = int(floor(lights.length() * random_float()));
+	vec3 onLight = randomOnAQuad(lights[lightIndex].quadIndex);
+	vec3 toLight = onLight - p;
+	float distSquared = dot(toLight, toLight);
+	toLight = normalize(toLight);
+	lightCosine = abs(toLight.y);
+
+	pdf = distSquared / (lights.length() * lightCosine * lights[lightIndex].area);
+
+	return toLight;
 }
 
 bool scatter(ray r_in, inout hit_record rec, inout vec3 albedo, inout ray scattered) {
@@ -457,5 +484,5 @@ void main() {
 
 	color *= pixel_samples_scale;
 
-	imageStore(outputImage, ivec2(i, j), vec4(color, 1.0));
+	imageStore(outputImage, ivec2(i, IMAGE_HEIGHT - 1 - j), vec4(color, 1.0));
 }

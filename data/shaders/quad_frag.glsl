@@ -8,5 +8,7 @@ layout (binding = 0, rgba32f) uniform image2D inputImage;
 
 void main() {
 	vec4 pixel = imageLoad(inputImage, ivec2(gl_FragCoord.xy));
-	color = pixel;
+
+	float gamma = 2.2;
+	color = pixel; // vec4(pow(pixel.rgb, vec3(1.0 / gamma)), 1.0);
 }

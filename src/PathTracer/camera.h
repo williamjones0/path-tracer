@@ -76,15 +76,15 @@ public:
 	}
 
 	void initialize() {
+		image_height = static_cast<int>(image_width / aspect_ratio);
+		image_height = (image_height < 1) ? 1 : image_height;
+
 		imageData = new unsigned char[image_width * image_height * 3];
 
 		calculateParameters();
 	}
 
 	void calculateParameters() {
-		image_height = static_cast<int>(image_width / aspect_ratio);
-		image_height = (image_height < 1) ? 1 : image_height;
-
 		sqrt_spp = static_cast<int>(std::sqrt(samples_per_pixel));
 		pixel_samples_scale = 1.0 / (sqrt_spp * sqrt_spp);
 		recip_sqrt_spp = 1.0 / sqrt_spp;
